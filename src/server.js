@@ -43,9 +43,9 @@ server.use(Express.json());
 server.use(passport.initialize());
 
 server.use("/users", usersRouter);
-server.use("/images", imagesRouter);
-server.use("/files", filesRouter);
-server.use("/email", emailRouter);
+// server.use("/images", imagesRouter);
+// server.use("/files", filesRouter);
+// server.use("/email", emailRouter);
 // try
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);
@@ -53,11 +53,10 @@ server.use(forbiddenErrorHandler);
 server.use(notfoundHandler);
 server.use(genericErrorHandler);
 
-const httpServer = createServer(server);
 mongoose.connect(process.env.MONGO_URL);
 
 mongoose.connection.on("connected", () => {
-  httpServer.listen(port, () => {
+  server.listen(port, () => {
     console.table(listEndpoints(server));
     console.log(`Server is running on port ${port}`);
   });

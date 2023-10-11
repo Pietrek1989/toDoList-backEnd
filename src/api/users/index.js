@@ -1,7 +1,6 @@
 import express from "express";
 import createError from "http-errors";
 import UsersModel from "./model.js";
-import ReservationsModel from "../reservations/model.js";
 import {
   createAccessToken,
   createTokens,
@@ -78,22 +77,6 @@ usersRouter.put("/me/info", jwtAuth, async (req, res, next) => {
   }
 });
 
-usersRouter.get("/me/reservations", jwtAuth, async (req, res, next) => {
-  try {
-    const userID = req.user._id;
-
-    const reservationsByUser = await ReservationsModel.find({
-      user: userID,
-    })
-      .populate("content.offer")
-      .populate("user");
-
-    res.send(reservationsByUser);
-  } catch (error) {
-    next(error);
-  }
-});
-
 usersRouter.post(
   "/account",
   checkUserSchema,
@@ -125,6 +108,9 @@ usersRouter.post("/session", async (req, res, next) => {
     if (user) {
       const { accessToken, refreshToken } = await createTokens(user);
       res.send({ accessToken, refreshToken });
+      res.redirect(
+        `${process.env.FE_URL}/?accessToken=${req.user.accessToken}&refreshToken=${req.user.refreshToken}`
+      );
     } else {
       next(createHttpError(401, "Invalid credentials"));
     }
@@ -197,19 +183,6 @@ usersRouter.put("/:userId", jwtAuth, async (req, res, next) => {
       message: "User data updated successfully",
       updatedUser: user,
     });
-  } catch (error) {
-    next(error);
-  }
-});
-
-usersRouter.delete("/:userId", jwtAuth, async (req, res, next) => {
-  try {
-    const deletedUser = await UsersModel.findByIdAndDelete(req.params.userId);
-    if (deletedUser) {
-      res.status(204).send();
-    } else {
-      next(createError(404, `User with id ${req.params.userId} not found!`));
-    }
   } catch (error) {
     next(error);
   }

@@ -5,7 +5,7 @@ const userSchema = {
   username: {
     in: ["body"],
     isString: {
-      errorMessage: "Name is a mandatory field and needs to be a string!",
+      errorMessage: "Username is a mandatory field and needs to be a string!",
     },
   },
   email: {
