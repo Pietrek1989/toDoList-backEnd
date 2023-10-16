@@ -9,6 +9,8 @@ import {
 import passport from "passport";
 import { jwtAuth } from "../../lib/auth/jwtAuth.js";
 import { checkUserSchema, triggerBadRequest } from "./validation.js";
+import TaskModel from "../tasks/model.js";
+import mongoose from "mongoose";
 
 const usersRouter = express.Router();
 
@@ -43,7 +45,10 @@ usersRouter.get("/", async (req, res, next) => {
 usersRouter.get("/me/info", jwtAuth, async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const user = await UsersModel.findById(userId);
+    const user = await UsersModel.findById(userId)
+      .populate("tasks.todo")
+      .populate("tasks.doing")
+      .populate("tasks.done");
 
     res.send(user);
   } catch (error) {
@@ -73,7 +78,110 @@ usersRouter.put("/me/info", jwtAuth, async (req, res, next) => {
 
     res.send({ message: "User data updated successfully" });
   } catch (error) {
+    console.error(error);
+
     next(error);
+  }
+});
+usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const { tasks } = req.body;
+    console.log("Incoming tasks data:", req.body.tasks);
+    const mapTasks = async (taskArray) => {
+      return await Promise.all(
+        taskArray.map(async (task) => {
+          if (task._id) {
+            // Existing task, update it
+            const updatedTask = await TaskModel.findByIdAndUpdate(
+              task._id,
+              task,
+              { new: true }
+            );
+            return updatedTask._id;
+          } else {
+            // New task, create a new task
+            const newTask = new TaskModel(task);
+            await newTask.save();
+            return newTask._id;
+          }
+        })
+      );
+    };
+
+    const updatedTasks = {
+      todo: await mapTasks(tasks.todo),
+      doing: await mapTasks(tasks.doing),
+      done: await mapTasks(tasks.done),
+    };
+
+    const user = await UsersModel.findOneAndUpdate(
+      { _id: userId },
+      { tasks: updatedTasks },
+      { new: true, upsert: false, runValidators: true }
+    );
+
+    if (!user) {
+      return next(createError(404, "User not found"));
+    }
+
+    const populatedUser = await user.populate([
+      { path: "tasks.todo" },
+      { path: "tasks.doing" },
+      { path: "tasks.done" },
+    ]);
+    console.log("Updated tasks data:", populatedUser.tasks);
+    res.send({
+      message: "Tasks updated successfully",
+      tasks: populatedUser.tasks,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+usersRouter.put("/me/tasks/:taskId", jwtAuth, async (req, res) => {
+  try {
+    const user = await UsersModel.findById(req.user._id).populate(
+      "tasks.todo tasks.doing tasks.done"
+    );
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    const { taskId } = req.params;
+    const taskData = req.body;
+
+    const findTaskAndColumn = () => {
+      for (let column of ["todo", "doing", "done"]) {
+        const index = user.tasks[column].findIndex(
+          (task) => task._id.toString() === taskId
+        );
+        if (index !== -1) {
+          return { column, index };
+        }
+      }
+      return null;
+    };
+
+    const taskInfo = findTaskAndColumn();
+    if (!taskInfo) {
+      return res.status(404).send({ message: "Task not found" });
+    }
+
+    // Refetch the user and task to ensure we have the latest version
+    const freshUser = await UsersModel.findById(req.user._id).populate(
+      "tasks.todo tasks.doing tasks.done"
+    );
+    const freshTask = freshUser.tasks[taskInfo.column][taskInfo.index];
+
+    Object.assign(freshTask, taskData);
+    await freshTask.save();
+
+    res.send({ message: "Task updated successfully", task: freshTask });
+  } catch (error) {
+    console.error("Error in PUT /me/tasks/:taskId:", error);
+    res.status(500).send({ message: "Server error, we will fix it asap" });
   }
 });
 
@@ -108,11 +216,8 @@ usersRouter.post("/session", async (req, res, next) => {
     if (user) {
       const { accessToken, refreshToken } = await createTokens(user);
       res.send({ accessToken, refreshToken });
-      res.redirect(
-        `${process.env.FE_URL}/?accessToken=${req.user.accessToken}&refreshToken=${req.user.refreshToken}`
-      );
     } else {
-      next(createHttpError(401, "Invalid credentials"));
+      next(createError(401, "Invalid credentials"));
     }
   } catch (error) {
     next(error);

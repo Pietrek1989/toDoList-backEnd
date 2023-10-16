@@ -35,7 +35,8 @@ export const notfoundHandler = (err, req, res, next) => {
 };
 
 export const genericErrorHandler = (err, req, res, next) => {
-  console.log("ERROR:", err);
+  console.error("Error:", err.message); // Log the error message
+  console.error("Stack Trace:", err.stack); // Log the stack trace
   res.status(500).send({
     message: "Server error, we will fix it asap",
   });

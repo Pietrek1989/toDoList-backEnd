@@ -17,9 +17,9 @@ export const googleStrategy = new GoogleStrategy(
         pnext(null, { accessToken, refreshToken });
       } else {
         const newUser = await UsersModel({
-          name: given_name,
-          surname: family_name,
+          username: given_name,
           email,
+          avatar: picture,
           googleId: sub,
         });
 

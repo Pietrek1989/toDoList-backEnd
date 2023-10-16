@@ -8,28 +8,17 @@ const UsersSchema = new Schema(
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String },
-    tasks: [
-      {
-        toDo: {
-          title: {
-            type: String,
-            img: String,
-          },
-        },
-        Doing: {
-          title: {
-            type: String,
-            img: String,
-          },
-        },
-        Done: {
-          title: {
-            type: String,
-            img: String,
-          },
-        },
-      },
-    ],
+    avatar: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/dvagn6szo/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1697119285/profile-728591_640_iqw8jv.jpg",
+    },
+    tasks: {
+      todo: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+      doing: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+      done: [{ type: Schema.Types.ObjectId, ref: "Task" }],
+    },
+
     refreshToken: { type: String },
     googleId: { type: String },
   },
