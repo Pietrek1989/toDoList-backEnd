@@ -10,7 +10,7 @@ import passport from "passport";
 import { jwtAuth } from "../../lib/auth/jwtAuth.js";
 import { checkUserSchema, triggerBadRequest } from "./validation.js";
 import TaskModel from "../tasks/model.js";
-import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
 const usersRouter = express.Router();
 
@@ -288,6 +288,52 @@ usersRouter.put("/:userId", jwtAuth, async (req, res, next) => {
       message: "User data updated successfully",
       updatedUser: user,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+usersRouter.post("/password-reset-request", async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await UsersModel.findOne({ email });
+
+    if (!user) {
+      return next(createError(404, "User not found"));
+    }
+
+    const resetToken = uuidv4();
+    const resetTokenExpiration = new Date(Date.now() + 3600000); // 1 hour from now
+
+    user.resetToken = resetToken;
+    user.resetTokenExpiration = resetTokenExpiration;
+    await user.save();
+
+    // Send email to user with reset link
+    // e.g., `https://yourapp.com/reset-password?token=${resetToken}`
+    // ...
+
+    res.send({ message: "Reset link sent to email" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+usersRouter.post("/password-reset", async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    const user = await UsersModel.findOne({ resetToken: token });
+
+    if (!user || user.resetTokenExpiration < Date.now()) {
+      return next(createError(400, "Invalid or expired reset token"));
+    }
+
+    user.password = newPassword;
+    user.resetToken = undefined;
+    user.resetTokenExpiration = undefined;
+    await user.save();
+
+    res.send({ message: "Password reset successful" });
   } catch (error) {
     next(error);
   }

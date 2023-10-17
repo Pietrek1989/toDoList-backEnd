@@ -21,6 +21,14 @@ const UsersSchema = new Schema(
 
     refreshToken: { type: String },
     googleId: { type: String },
+    resetToken: {
+      type: String,
+      default: null,
+    },
+    resetTokenExpiration: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -13,10 +13,10 @@ import createHttpError from "http-errors";
 import passport from "passport";
 import { googleStrategy } from "./lib/auth/googleOAuth.js";
 import listEndpoints from "express-list-endpoints";
+import emailRouter from "./api/email/index.js";
+
 // import filesRouter from "./api/images/files.js";
 // import imagesRouter from "./api/images/index.js";
-
-// import emailRouter from "./api/email/index.js";
 
 const server = Express();
 
@@ -45,7 +45,7 @@ server.use(passport.initialize());
 server.use("/users", usersRouter);
 // server.use("/images", imagesRouter);
 // server.use("/files", filesRouter);
-// server.use("/email", emailRouter);
+server.use("/email", emailRouter);
 // try
 server.use(badRequestHandler);
 server.use(unauthorizedHandler);
