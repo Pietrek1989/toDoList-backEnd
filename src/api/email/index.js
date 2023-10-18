@@ -31,19 +31,20 @@ emailRouter.post("/forgot-password", async (req, res, next) => {
       to: [{ email }],
       sender: {
         email: process.env.SENDER_EMAIL_ADRESS,
-        name: "Your App Name",
+        name: "To Do List by Piotr Rodzen",
       },
       subject: "Password Reset Request",
       htmlContent: `
         <h1>Password Reset Request</h1>
         <p>You requested a password reset. Click <a href="${resetURL}">here</a> to reset your password.</p>
         <p>If you did not request this, please ignore this email.</p>
+        
       `,
       replyTo: { email: process.env.SENDER_EMAIL_ADRESS },
     };
 
     await apiInstance.sendTransacEmail(sendSmtpEmail);
-    res.status(200).send("Password reset email sent successfully");
+    res.status(200).json({ message: "Password reset email sent successfully" });
   } catch (error) {
     console.error(error);
     next(
@@ -73,7 +74,7 @@ emailRouter.post("/reset-password/:token", async (req, res, next) => {
     user.resetTokenExpiration = undefined;
     await user.save();
 
-    res.status(200).send("Password reset successful");
+    res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
     console.error(error);
     next(new createError.InternalServerError("Error resetting password"));
