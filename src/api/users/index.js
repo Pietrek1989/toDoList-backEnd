@@ -96,8 +96,9 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
             const updatedTask = await TaskModel.findByIdAndUpdate(
               task._id,
               task,
-              { new: true }
-            );
+              { new: true, upsert: false, runValidators: true }
+            ).lean();
+
             return updatedTask._id;
           } else {
             // New task, create a new task
@@ -133,7 +134,7 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
     console.log("Updated task data:", populatedUser.tasks);
     res.send({
       message: "Tasks updated successfully",
-      tasks: populatedUser.tasks,
+      tasks: user.tasks,
     });
   } catch (error) {
     next(error);
