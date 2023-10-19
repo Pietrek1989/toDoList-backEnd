@@ -130,7 +130,7 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
       { path: "tasks.doing" },
       { path: "tasks.done" },
     ]);
-    console.log("Updated tasks data:", populatedUser.tasks);
+    console.log("Updated task data:", populatedUser.tasks);
     res.send({
       message: "Tasks updated successfully",
       tasks: populatedUser.tasks,
