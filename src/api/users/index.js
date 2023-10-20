@@ -87,7 +87,7 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
   try {
     const userId = req.user._id;
     const { tasks } = req.body;
-    console.log("Incoming tasks data:", req.body.tasks);
+    // console.log("Incoming tasks data:", req.body.tasks);
     const mapTasks = async (taskArray) => {
       return await Promise.all(
         taskArray.map(async (task) => {
@@ -131,7 +131,7 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
       { path: "tasks.doing" },
       { path: "tasks.done" },
     ]);
-    console.log("Updated task data:", populatedUser.tasks);
+    // console.log("Updated task data:", populatedUser.tasks);
     res.send({
       message: "Tasks updated successfully",
       tasks: user.tasks,
@@ -225,6 +225,20 @@ usersRouter.post("/session", async (req, res, next) => {
   }
 });
 
+usersRouter.post("/session/refresh", async (req, res, next) => {
+  try {
+    const { currentRefreshToken } = req.body;
+    const { accessToken, refreshToken } = await verifyAndRefreshTokens(
+      currentRefreshToken
+    );
+    // console.log("old token", currentRefreshToken);
+    // console.log("new tokens", accessToken, refreshToken);
+    res.send({ accessToken, refreshToken });
+  } catch (error) {
+    next(error);
+  }
+});
+
 usersRouter.delete("/session", jwtAuth, async (req, res, next) => {
   try {
     const user = await UsersModel.findByIdAndUpdate(
@@ -235,18 +249,6 @@ usersRouter.delete("/session", jwtAuth, async (req, res, next) => {
       { new: true }
     );
     res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
-});
-
-usersRouter.post("/session/refresh", jwtAuth, async (req, res, next) => {
-  try {
-    const { currentRefreshToken } = req.body;
-    const { accessToken, refreshToken } = await verifyAndRefreshTokens(
-      currentRefreshToken
-    );
-    res.send({ accessToken, refreshToken });
   } catch (error) {
     next(error);
   }

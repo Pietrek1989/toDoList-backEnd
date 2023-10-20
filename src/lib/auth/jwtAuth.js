@@ -8,7 +8,7 @@ export const jwtAuth = async (req, res, next) => {
     next(createHttpError(401, "No bearer token provided. 🐻"));
   } else {
     const accessToken = req.headers.authorization.replace("Bearer ", "");
-    console.log("Access Token:", accessToken);
+    // console.log("Access Token:", accessToken);
     try {
       const payload = await verifyAccessToken(accessToken);
       req.user = { _id: payload._id };

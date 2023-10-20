@@ -7,13 +7,13 @@ export const createAccessToken = (payload) =>
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "7d" },
       (err, token) => {
         if (err) {
           console.error("Error creating access token:", err);
           reject(err);
         } else {
-          console.log("Access Token created:", token);
+          // console.log("Access Token created:", token);
           resolve(token);
         }
       }
@@ -23,13 +23,13 @@ export const createAccessToken = (payload) =>
 export const verifyAccessToken = (token) =>
   new Promise((resolve, reject) =>
     jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
-      console.log("acc Token being verified:", token);
+      // console.log("acc Token being verified:", token);
 
       if (err) {
         console.error("Error verifying access token:", err);
         reject(err);
       } else {
-        console.log("Access Token verified:", payload);
+        // console.log("Access Token verified:", payload);
         resolve(payload);
       }
     })
@@ -51,7 +51,7 @@ export const createRefreshToken = (payload) =>
 export const verifyRefreshToken = (token) =>
   new Promise((resolve, reject) =>
     jwt.verify(token, process.env.REFRESH_SECRET, (err, payload) => {
-      console.log("ref Token being verified:", token);
+      // console.log("ref Token being verified:", token);
 
       if (err) reject(err);
       else resolve(payload);
@@ -59,7 +59,7 @@ export const verifyRefreshToken = (token) =>
   );
 
 export const createTokens = async (user) => {
-  console.log(user);
+  // console.log(user);
   const accessToken = await createAccessToken({
     _id: user._id,
   });
@@ -75,11 +75,10 @@ export const createTokens = async (user) => {
 
 export const verifyAndRefreshTokens = async (currentRefreshToken) => {
   try {
-    console.log("refreshToken", currentRefreshToken);
+    // console.log("refreshToken", currentRefreshToken);
     const { _id } = await verifyRefreshToken(currentRefreshToken);
-    console.log("id", _id);
     const user = await UsersModel.findById(_id);
-    console.log("user", user);
+    // console.log("user", user);
     if (!user) throw new createHttpError(404, `User with id ${_id} not found.`);
     if (user.refreshToken && user.refreshToken === currentRefreshToken) {
       const { accessToken, refreshToken } = await createTokens(user);
