@@ -83,11 +83,12 @@ usersRouter.put("/me/info", jwtAuth, async (req, res, next) => {
     next(error);
   }
 });
+
 usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
   try {
     const userId = req.user._id;
     const { tasks } = req.body;
-    // console.log("Incoming tasks data:", req.body.tasks);
+    console.log("Incoming tasks data:", req.body.tasks);
     const mapTasks = async (taskArray) => {
       return await Promise.all(
         taskArray.map(async (task) => {
@@ -96,9 +97,8 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
             const updatedTask = await TaskModel.findByIdAndUpdate(
               task._id,
               task,
-              { new: true, upsert: false, runValidators: true }
-            ).lean();
-
+              { new: true }
+            );
             return updatedTask._id;
           } else {
             // New task, create a new task
@@ -131,10 +131,10 @@ usersRouter.put("/me/tasks", jwtAuth, async (req, res, next) => {
       { path: "tasks.doing" },
       { path: "tasks.done" },
     ]);
-    // console.log("Updated task data:", populatedUser.tasks);
+    console.log("Updated task data:", populatedUser.tasks);
     res.send({
       message: "Tasks updated successfully",
-      tasks: user.tasks,
+      tasks: populatedUser.tasks,
     });
   } catch (error) {
     next(error);
