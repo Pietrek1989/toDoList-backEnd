@@ -55,9 +55,36 @@ server.use(genericErrorHandler);
 
 mongoose.connect(process.env.MONGO_URL);
 
+let httpServer = null;
+
 mongoose.connection.on("connected", () => {
-  server.listen(port, () => {
+  httpServer = server.listen(port, () => {
     console.table(listEndpoints(server));
+
     console.log(`Server is running on port ${port}`);
   });
+});
+
+// mongoose.connection.on("connected", () => {
+//   server.listen(port, () => {
+//     console.table(listEndpoints(server));
+//     console.log(`Server is running on port ${port}`);
+//   });
+// });
+
+const gracefulShutdown = (signal) => {
+  console.log(`Received ${signal}. Shutting down gracefully.`);
+  httpServer.close(() => {
+    console.log("HTTP server closed.");
+    mongoose.connection.close(false, () => {
+      console.log("MongoDB connection closed.");
+      process.exit(0);
+    });
+  });
+};
+
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
